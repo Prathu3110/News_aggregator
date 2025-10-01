@@ -120,7 +120,7 @@ def home():
 """Trendning news from news api """
 @app.route('/trending')
 def trending():
-    API_KEY='777ed8d094d74c67b483021cdb854cee'
+    API_KEY=''
 
     newsapi_url = f'https://newsapi.org/v2/top-headlines?country=in&apiKey={API_KEY}'
     newsapi_response = requests.get(newsapi_url)
