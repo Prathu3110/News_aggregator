@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify , request
 import requests 
 from dotenv import load_dotenv
 import os
@@ -82,7 +82,7 @@ def normalize_article(article, source):
             'source': f"NewsAPI - {article.get('source', {}).get('name', 'Unknown')}",
             'published_date': article.get('publishedAt', ''),
             'score': 0,  
-            'description': article.get('description', '')[:200]  
+            'description': (article.get('description') or '')[:200]  
         }
     
     elif source == 'HackerNews':
@@ -115,6 +115,40 @@ def normalize_article(article, source):
     
     return normalized
 
+"""Categorize articles based on keywords"""
+def categorize_article(article):
+    """
+    Assign category based on title/description keywords
+    """
+    title = article.get('title', '').lower()
+    description = article.get('description', '').lower()
+    text = title + ' ' + description
+    
+    # Define keyword lists
+    tech_keywords = ['tech', 'ai', 'software', 'computer', 'app', 'startup', 'crypto', 
+                     'bitcoin', 'programming', 'code', 'google', 'apple', 'microsoft',
+                     'developer', 'algorithm', 'data', 'cloud', 'security']
+    
+    sports_keywords = ['sport', 'football', 'cricket', 'tennis', 'soccer', 'basketball',
+                       'ipl', 'match', 'player', 'team', 'game', 'tournament', 'league']
+    
+    entertainment_keywords = ['movie', 'film', 'music', 'celebrity', 'actor', 'actress',
+                             'hollywood', 'bollywood', 'netflix', 'show', 'series', 'concert']
+    
+    business_keywords = ['business', 'economy', 'market', 'stock', 'trade', 'company',
+                        'finance', 'investment', 'bank', 'revenue', 'profit']
+    
+    # Check matches
+    if any(keyword in text for keyword in tech_keywords):
+        return 'technology'
+    elif any(keyword in text for keyword in sports_keywords):
+        return 'sports'
+    elif any(keyword in text for keyword in entertainment_keywords):
+        return 'entertainment'
+    elif any(keyword in text for keyword in business_keywords):
+        return 'business'
+    else:
+        return 'general'
 
 @app.route('/')
 def home():
@@ -167,7 +201,64 @@ def trending():
     })
 
 
-
+"""News filtered by category"""
+@app.route('/news')
+def news_by_category():
+    """
+    Get news filtered by category
+    Usage: /news?category=technology
+    Categories: technology, sports, entertainment, business, general, all
+    """
+    # Get category from URL parameter
+    category = request.args.get('category', 'all').lower()
+    
+    API_KEY = os.getenv('NEWSAPI_KEY')
+    
+    # Fetch from all sources
+    newsapi_url = f'https://newsapi.org/v2/top-headlines?country=us&apiKey={API_KEY}'
+    newsapi_response = requests.get(newsapi_url)
+    newsapi_data = newsapi_response.json()
+    
+    hackernews_articles = fetch_hackernews()
+    reddit_articles = fetch_reddit()
+    
+    # Collect and categorize all articles
+    all_articles = []
+    
+    # NewsAPI articles
+    for article in newsapi_data.get('articles', []):
+        normalized = normalize_article(article, 'NewsAPI')
+        normalized['category'] = categorize_article(normalized)
+        all_articles.append(normalized)
+    
+    # HackerNews articles
+    for article in hackernews_articles:
+        normalized = normalize_article(article, 'HackerNews')
+        normalized['category'] = categorize_article(normalized)
+        all_articles.append(normalized)
+    
+    # Reddit articles
+    for article in reddit_articles:
+        normalized = normalize_article(article, 'Reddit')
+        normalized['category'] = categorize_article(normalized)
+        all_articles.append(normalized)
+    
+    # Filter by category if specified
+    if category != 'all':
+        filtered = [a for a in all_articles if a['category'] == category]
+    else:
+        filtered = all_articles
+    
+    # Sort by score
+    filtered.sort(key=lambda x: x['score'], reverse=True)
+    
+    return jsonify({
+        'status': 'ok',
+        'category': category,
+        'total_articles': len(filtered),
+        'available_categories': ['technology', 'sports', 'entertainment', 'business', 'general'],
+        'articles': filtered[:20]
+    })
 
 
 
