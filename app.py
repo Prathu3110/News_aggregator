@@ -126,7 +126,7 @@ def home():
 def trending():
     API_KEY=os.getenv('NEWSAPI_KEY')
 
-    newsapi_url = f'https://newsapi.org/v2/top-headlines?country=in&apiKey={API_KEY}'
+    newsapi_url = f'https://newsapi.org/v2/top-headlines?country=us&apiKey={API_KEY}'
     newsapi_response = requests.get(newsapi_url)
     newsapi_data = newsapi_response.json()
     
