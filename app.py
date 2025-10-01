@@ -1,5 +1,9 @@
 from flask import Flask, jsonify
 import requests 
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 app=Flask(__name__)
 
@@ -120,7 +124,7 @@ def home():
 """Trendning news from news api """
 @app.route('/trending')
 def trending():
-    API_KEY=''
+    API_KEY=os.getenv('NEWSAPI_KEY')
 
     newsapi_url = f'https://newsapi.org/v2/top-headlines?country=in&apiKey={API_KEY}'
     newsapi_response = requests.get(newsapi_url)
