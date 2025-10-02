@@ -262,7 +262,7 @@ ${data.top_articles?.map((a, i) => `  ${i+1}. ${a.title} (Score: ${a.score})`).j
 // Show about information
 function showAbout() {
     const message = `
-NewsHub Aggregator v2.0
+NewsHub Aggregator v69.0
 ━━━━━━━━━━━━━━━━━━━━━━━
 A professional news aggregation platform that combines news from multiple sources with AI-powered analysis.
 
