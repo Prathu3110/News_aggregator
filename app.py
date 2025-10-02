@@ -6,11 +6,14 @@ import os
 from collections import Counter
 import re
 from datetime import datetime
+from flask_cors import CORS
+
+
 
 load_dotenv()
 
 app=Flask(__name__)
-
+CORS(app) 
 
 """News from Hacker news """
 def fetch_hackernews():
@@ -409,6 +412,90 @@ def search():
         'articles': all_articles
     })
 
+# Add this endpoint to your app.py if it's missing
+
+@app.route('/stats')
+def stats():
+    """Get statistics and trending keywords"""
+    API_KEY = os.getenv('NEWSAPI_KEY')
+    
+    try:
+        newsapi_url = f'https://newsapi.org/v2/top-headlines?country=us&apiKey={API_KEY}'
+        newsapi_response = requests.get(newsapi_url)
+        newsapi_data = newsapi_response.json()
+        
+        hackernews_articles = fetch_hackernews()
+        reddit_articles = fetch_reddit()
+        
+        all_articles = []
+        
+        # Process NewsAPI articles
+        for article in newsapi_data.get('articles', []):
+            normalized = normalize_article(article, 'NewsAPI')
+            normalized['category'] = categorize_article(normalized)
+            all_articles.append(normalized)
+        
+        # Process HackerNews articles
+        for article in hackernews_articles:
+            normalized = normalize_article(article, 'HackerNews')
+            normalized['category'] = categorize_article(normalized)
+            all_articles.append(normalized)
+        
+        # Process Reddit articles
+        for article in reddit_articles:
+            normalized = normalize_article(article, 'Reddit')
+            normalized['category'] = categorize_article(normalized)
+            all_articles.append(normalized)
+        
+        # Calculate statistics
+        from collections import Counter
+        category_counts = Counter([a['category'] for a in all_articles])
+        sentiment_counts = Counter([a.get('sentiment', 'neutral') for a in all_articles])
+        source_counts = Counter([a['source'].split(' - ')[0] for a in all_articles])
+        
+        # Get trending keywords
+        trending_keywords = extract_keywords(all_articles)
+        
+        return jsonify({
+            'status': 'ok',
+            'total_articles': len(all_articles),
+            'category_distribution': dict(category_counts),
+            'sentiment_distribution': dict(sentiment_counts),
+            'source_distribution': dict(source_counts),
+            'trending_keywords': trending_keywords,
+            'timestamp': datetime.now().isoformat()
+        })
+    
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+
+# Also add the extract_keywords function if missing
+def extract_keywords(articles, top_n=20):
+    """Extract trending keywords from articles"""
+    import re
+    from collections import Counter
+    
+    text = ' '.join([
+        article.get('title', '') + ' ' + article.get('description', '')
+        for article in articles
+    ])
+    
+    # Remove common words
+    stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 
+                  'for', 'of', 'with', 'by', 'from', 'is', 'are', 'was', 'were',
+                  'no', 'not', 'be', 'has', 'have', 'had', 'do', 'does', 'did'}
+    
+    words = re.findall(r'\b[a-z]{4,}\b', text.lower())
+    filtered_words = [w for w in words if w not in stop_words]
+    
+    word_freq = Counter(filtered_words)
+    return [{'word': word, 'count': count} 
+            for word, count in word_freq.most_common(top_n)]
+
 # IMPROVED: Better error handling (CODE QUALITY points!)
 @app.errorhandler(404)
 def not_found(error):
@@ -470,6 +557,7 @@ def docs():
             'Comprehensive analytics'
         ]
     })
+
 
 
 if __name__=='__main__':

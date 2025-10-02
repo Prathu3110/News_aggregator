@@ -3,314 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>News Aggregator - Your Daily Dose of News</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .article-card {
-            animation: fadeIn 0.5s ease-out;
-        }
-        .skeleton {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-        }
-        @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-    </style>
+    <title>NewsHub - News Aggregator</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body class="bg-gray-50 min-h-screen">
-    <!-- Header -->
-    <header class="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
-        <div class="container mx-auto px-4 py-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-3xl font-bold">📰 News Aggregator</h1>
-                    <p class="text-blue-100 mt-1">Powered by NewsAPI, HackerNews & Reddit</p>
-                </div>
-                <div class="text-right">
-                    <div class="text-sm text-blue-100">Total Articles</div>
-                    <div id="total-count" class="text-2xl font-bold">...</div>
-                </div>
-            </div>
+<body>
+    <div class="animated-bg" id="bg"></div>
+    
+    <header>
+        <div class="header-content">
+            <div class="logo">NewsHub</div>
+            <nav class="nav-buttons">
+                <button class="nav-btn" onclick="loadStats()">Statistics</button>
+                <button class="nav-btn" onclick="loadAnalytics()">Analytics</button>
+                <button class="nav-btn" onclick="showAbout()">About</button>
+            </nav>
         </div>
     </header>
 
-    <!-- Category Filters -->
-    <div class="bg-white shadow-sm border-b sticky top-0 z-10">
-        <div class="container mx-auto px-4 py-4">
-            <div class="flex flex-wrap gap-2" id="category-buttons">
-                <button onclick="filterCategory('all')" class="category-btn px-4 py-2 rounded-full font-medium transition-all bg-blue-600 text-white">
-                    All
-                </button>
-                <button onclick="filterCategory('technology')" class="category-btn px-4 py-2 rounded-full font-medium transition-all bg-gray-200 text-gray-700 hover:bg-gray-300">
-                    💻 Technology
-                </button>
-                <button onclick="filterCategory('sports')" class="category-btn px-4 py-2 rounded-full font-medium transition-all bg-gray-200 text-gray-700 hover:bg-gray-300">
-                    ⚽ Sports
-                </button>
-                <button onclick="filterCategory('entertainment')" class="category-btn px-4 py-2 rounded-full font-medium transition-all bg-gray-200 text-gray-700 hover:bg-gray-300">
-                    🎬 Entertainment
-                </button>
-                <button onclick="filterCategory('business')" class="category-btn px-4 py-2 rounded-full font-medium transition-all bg-gray-200 text-gray-700 hover:bg-gray-300">
-                    💼 Business
-                </button>
-                <button onclick="filterCategory('general')" class="category-btn px-4 py-2 rounded-full font-medium transition-all bg-gray-200 text-gray-700 hover:bg-gray-300">
-                    📋 General
-                </button>
+    <div class="container">
+        <section class="hero">
+            <h1> News Aggregator</h1>
+            <p>Real-time news from multiple sources with AI-powered insights</p>
+        </section>
+
+        <section class="stats-bar" id="statsBar">
+            <div class="stat-card">
+                <span class="stat-number" id="totalArticles">0</span>
+                <span class="stat-label">Total Articles</span>
             </div>
+            <div class="stat-card">
+                <span class="stat-number" id="totalSources">3</span>
+                <span class="stat-label">News Sources</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="positiveCount">0</span>
+                <span class="stat-label">Positive Sentiment</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="categoryCount">5</span>
+                <span class="stat-label">Categories</span>
+            </div>
+        </section>
+
+        <section class="filters">
+            <button class="filter-btn active" onclick="filterNews('all')">All News</button>
+            <button class="filter-btn" onclick="filterNews('technology')">Technology</button>
+            <button class="filter-btn" onclick="filterNews('business')">Business</button>
+            <button class="filter-btn" onclick="filterNews('sports')">Sports</button>
+            <button class="filter-btn" onclick="filterNews('entertainment')">Entertainment</button>
+            <button class="filter-btn" onclick="filterNews('general')">General</button>
+        </section>
+
+        <section class="search-section">
+            <input 
+                type="text" 
+                id="searchInput" 
+                placeholder="Search articles by keyword..." 
+                class="search-input"
+            >
+            <button onclick="searchArticles()" class="search-btn">Search</button>
+        </section>
+
+        <div id="keywordSection"></div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Loading latest news...</p>
         </div>
+
+        <div class="news-grid" id="newsGrid"></div>
     </div>
 
-    <!-- Main Content -->
-    <main class="container mx-auto px-4 py-8">
-        <!-- Loading State -->
-        <div id="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="skeleton h-48"></div>
-                <div class="p-4">
-                    <div class="skeleton h-6 mb-2 rounded"></div>
-                    <div class="skeleton h-4 mb-2 rounded"></div>
-                    <div class="skeleton h-4 w-2/3 rounded"></div>
-                </div>
-            </div>
-            <div class="bg-white rounded-lg shadow-md overflow-hidden hidden md:block">
-                <div class="skeleton h-48"></div>
-                <div class="p-4">
-                    <div class="skeleton h-6 mb-2 rounded"></div>
-                    <div class="skeleton h-4 mb-2 rounded"></div>
-                    <div class="skeleton h-4 w-2/3 rounded"></div>
-                </div>
-            </div>
-            <div class="bg-white rounded-lg shadow-md overflow-hidden hidden lg:block">
-                <div class="skeleton h-48"></div>
-                <div class="p-4">
-                    <div class="skeleton h-6 mb-2 rounded"></div>
-                    <div class="skeleton h-4 mb-2 rounded"></div>
-                    <div class="skeleton h-4 w-2/3 rounded"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Error State -->
-        <div id="error" class="hidden text-center py-12">
-            <div class="text-6xl mb-4">⚠️</div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">Oops! Something went wrong</h2>
-            <p class="text-gray-600 mb-4">Failed to load articles. Please try again.</p>
-            <button onclick="loadArticles()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                Retry
-            </button>
-        </div>
-
-        <!-- Articles Grid -->
-        <div id="articles-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
-            <!-- Articles will be inserted here by JavaScript -->
-        </div>
-
-        <!-- Empty State -->
-        <div id="empty" class="hidden text-center py-12">
-            <div class="text-6xl mb-4">📭</div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">No articles found</h2>
-            <p class="text-gray-600">Try selecting a different category</p>
-        </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white mt-12 py-6">
-        <div class="container mx-auto px-4 text-center">
-            <p class="text-gray-400">Built with Flask, NewsAPI, HackerNews & Reddit APIs</p>
-            <p class="text-gray-500 text-sm mt-2">News Aggregator Project • 2024</p>
-        </div>
+    <footer class="footer">
+        <p>&copy;  News Aggregator | Powered by NewsAPI, HackerNews & Reddit</p>
     </footer>
 
-    <script>
-        // Configuration
-        const API_BASE_URL = 'http://127.0.0.1:5000';
-        let currentCategory = 'all';
-
-        // Source color mapping
-        const sourceColors = {
-            'NewsAPI': 'bg-blue-100 text-blue-800',
-            'HackerNews': 'bg-orange-100 text-orange-800',
-            'Reddit': 'bg-red-100 text-red-800'
-        };
-
-        // Category color mapping
-        const categoryColors = {
-            'technology': 'bg-purple-100 text-purple-800',
-            'sports': 'bg-green-100 text-green-800',
-            'entertainment': 'bg-pink-100 text-pink-800',
-            'business': 'bg-yellow-100 text-yellow-800',
-            'general': 'bg-gray-100 text-gray-800'
-        };
-
-        // Load articles on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            loadArticles();
-        });
-
-        // Filter by category
-        function filterCategory(category) {
-            currentCategory = category;
-            
-            // Update button states
-            const buttons = document.querySelectorAll('.category-btn');
-            buttons.forEach(btn => {
-                btn.classList.remove('bg-blue-600', 'text-white');
-                btn.classList.add('bg-gray-200', 'text-gray-700');
-            });
-            event.target.classList.remove('bg-gray-200', 'text-gray-700');
-            event.target.classList.add('bg-blue-600', 'text-white');
-            
-            loadArticles();
-        }
-
-        // Load articles from API
-        async function loadArticles() {
-            showLoading();
-            
-            try {
-                const endpoint = currentCategory === 'all' 
-                    ? `${API_BASE_URL}/trending`
-                    : `${API_BASE_URL}/news?category=${currentCategory}`;
-                
-                const response = await fetch(endpoint);
-                
-                if (!response.ok) {
-                    throw new Error('API request failed');
-                }
-                
-                const data = await response.json();
-                
-                if (data.articles && data.articles.length > 0) {
-                    displayArticles(data.articles);
-                    updateTotalCount(data.total_articles || data.articles.length);
-                } else {
-                    showEmpty();
-                }
-            } catch (error) {
-                console.error('Error loading articles:', error);
-                showError();
-            }
-        }
-
-        // Display articles in grid
-        function displayArticles(articles) {
-            const grid = document.getElementById('articles-grid');
-            grid.innerHTML = '';
-            
-            articles.forEach((article, index) => {
-                const card = createArticleCard(article, index);
-                grid.appendChild(card);
-            });
-            
-            showArticles();
-        }
-
-        // Create article card element
-        function createArticleCard(article, index) {
-            const card = document.createElement('div');
-            card.className = 'article-card bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300';
-            card.style.animationDelay = `${index * 0.05}s`;
-            
-            const sourceName = article.source.split(' - ')[0];
-            const sourceColor = sourceColors[sourceName] || 'bg-gray-100 text-gray-800';
-            const categoryColor = categoryColors[article.category] || 'bg-gray-100 text-gray-800';
-            
-            card.innerHTML = `
-                <div class="p-5">
-                    <div class="flex gap-2 mb-3">
-                        <span class="text-xs px-2 py-1 rounded-full font-medium ${sourceColor}">
-                            ${article.source}
-                        </span>
-                        ${article.category ? `
-                        <span class="text-xs px-2 py-1 rounded-full font-medium ${categoryColor}">
-                            ${article.category}
-                        </span>
-                        ` : ''}
-                    </div>
-                    
-                    <h3 class="text-lg font-bold text-gray-800 mb-2 line-clamp-2 hover:text-blue-600">
-                        ${article.title}
-                    </h3>
-                    
-                    <p class="text-gray-600 text-sm mb-3 line-clamp-2">
-                        ${article.description || 'No description available'}
-                    </p>
-                    
-                    <div class="flex items-center justify-between text-sm text-gray-500 mb-3">
-                        <span>⏰ ${formatDate(article.published_date)}</span>
-                        ${article.score > 0 ? `<span class="font-semibold text-blue-600">🔥 ${article.score}</span>` : ''}
-                    </div>
-                    
-                    <a href="${article.url}" target="_blank" rel="noopener noreferrer" 
-                       class="block w-full text-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
-                        Read Article →
-                    </a>
-                </div>
-            `;
-            
-            return card;
-        }
-
-        // Format date string
-        function formatDate(dateStr) {
-            if (!dateStr) return 'Recently';
-            
-            try {
-                const date = new Date(dateStr);
-                const now = new Date();
-                const diffMs = now - date;
-                const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-                
-                if (diffHrs < 1) return 'Just now';
-                if (diffHrs < 24) return `${diffHrs}h ago`;
-                if (diffHrs < 48) return 'Yesterday';
-                
-                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            } catch {
-                return 'Recently';
-            }
-        }
-
-        // Update total count
-        function updateTotalCount(count) {
-            document.getElementById('total-count').textContent = count;
-        }
-
-        // Show/hide states
-        function showLoading() {
-            document.getElementById('loading').classList.remove('hidden');
-            document.getElementById('articles-grid').classList.add('hidden');
-            document.getElementById('error').classList.add('hidden');
-            document.getElementById('empty').classList.add('hidden');
-        }
-
-        function showArticles() {
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('articles-grid').classList.remove('hidden');
-            document.getElementById('error').classList.add('hidden');
-            document.getElementById('empty').classList.add('hidden');
-        }
-
-        function showError() {
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('articles-grid').classList.add('hidden');
-            document.getElementById('error').classList.remove('hidden');
-            document.getElementById('empty').classList.add('hidden');
-        }
-
-        function showEmpty() {
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('articles-grid').classList.add('hidden');
-            document.getElementById('error').classList.add('hidden');
-            document.getElementById('empty').classList.remove('hidden');
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
