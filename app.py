@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 import os
 
 from collections import Counter
-import re
 from datetime import datetime
 from flask_cors import CORS
 
@@ -362,10 +361,7 @@ def analytics():
 # Add this NEW endpoint - search functionality!
 @app.route('/search')
 def search():
-    """
-    Search articles by keyword
-    Shows you understand query parameters and filtering
-    """
+
     query = request.args.get('q', '').lower()
     
     if not query:
