@@ -212,9 +212,7 @@ def trending():
 @app.route('/news')
 def news_by_category():
     """
-    Get news filtered by category
-    Usage: /news?category=technology
-    Categories: technology, sports, entertainment, business, general, all
+     news filtered by category /news?category=technology
     """
     # Get category from URL parameter
     category = request.args.get('category', 'all').lower()
@@ -270,8 +268,7 @@ def news_by_category():
 @app.route('/summary/<int:article_id>')
 def get_summary(article_id):
     """
-    Get AI-generated summary of an article
-    This shows you can do advanced text processing!
+     AI-generated summary of an article
     """
     
     
@@ -290,7 +287,6 @@ def get_summary(article_id):
 def analytics():
     """
     Advanced analytics dashboard data
-    Shows you can do data science!
     """
     API_KEY = os.getenv('NEWSAPI_KEY')
     
@@ -408,7 +404,7 @@ def search():
 
 @app.route('/stats')
 def stats():
-    """Get statistics and trending keywords"""
+    """ statistics and trending keywords"""
     API_KEY = os.getenv('NEWSAPI_KEY')
     
     try:
@@ -513,7 +509,6 @@ def internal_error(error):
 def docs():
     """
     API Documentation
-    Shows you care about usability!
     """
     return jsonify({
         'api_name': 'NewsHub Aggregator API',
