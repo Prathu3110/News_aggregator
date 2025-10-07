@@ -188,7 +188,7 @@ def trending():
     for article in reddit_articles[:5]:
         reddit_normalized.append(normalize_article(article, 'Reddit'))
     
-    # Interleave articles from all sources for diversity
+    # mix articles from all sources for diversity
     mixed_articles = []
     max_len = max(len(newsapi_normalized), len(hackernews_normalized), len(reddit_normalized))
     
@@ -250,7 +250,7 @@ def news_by_category():
         normalized['category'] = categorize_article(normalized)
         all_articles.append(normalized)
     
-    # Filter by category if specified
+  
     if category != 'all':
         filtered = [a for a in all_articles if a['category'] == category]
     else:
@@ -273,8 +273,7 @@ def get_summary(article_id):
     Get AI-generated summary of an article
     This shows you can do advanced text processing!
     """
-    # In real implementation, you'd fetch the article
-    # For demo, we'll show the capability
+    
     
     return jsonify({
         'status': 'ok',
@@ -287,7 +286,6 @@ def get_summary(article_id):
         ]
     })
 
-# Add this NEW endpoint - shows data analysis skills!
 @app.route('/analytics')
 def analytics():
     """
@@ -358,7 +356,6 @@ def analytics():
         }
     })
 
-# Add this NEW endpoint - search functionality!
 @app.route('/search')
 def search():
 
@@ -408,7 +405,6 @@ def search():
         'articles': all_articles
     })
 
-# Add this endpoint to your app.py if it's missing
 
 @app.route('/stats')
 def stats():
@@ -469,7 +465,6 @@ def stats():
         }), 500
 
 
-# Also add the extract_keywords function if missing
 def extract_keywords(articles, top_n=20):
     """Extract trending keywords from articles"""
     import re
@@ -492,7 +487,6 @@ def extract_keywords(articles, top_n=20):
     return [{'word': word, 'count': count} 
             for word, count in word_freq.most_common(top_n)]
 
-# IMPROVED: Better error handling (CODE QUALITY points!)
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({
@@ -515,7 +509,6 @@ def internal_error(error):
         'message': 'Internal server error. Please try again later.'
     }), 500
 
-# Add this to show API documentation (PROFESSIONALISM!)
 @app.route('/docs')
 def docs():
     """
